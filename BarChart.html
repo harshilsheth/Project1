@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Cereals D3</title>
+        <script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+        <style type="text/css">
+          rect:hover { fill: black; }
+
+          #tooltip {
+            position: absolute;
+            width: 250px;
+            height: 120px;
+            padding: 10px;
+            background-color: white;
+            -webkit-border-radius: 10px;
+            -moz-border-radius: 10px;
+            border-radius: 10px;
+            -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+          }
+          
+          #tooltip.hidden {
+            display: none;
+          }
+          
+          #tooltip p {
+            margin: 0;
+            font-family: sans-serif;
+            font-size: 16px;
+            line-height: 20px;
+          }
+
+          .axis path,
+          .axis line 
+          {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+          }
+
+          div 
+          {
+            position: absolute;
+            bottom: 100px;
+            left: 10px;
+          }
+		  #footer{
+		  position :absolute;
+		  bottom :10px;
+		  left:10px;
+		  }
+		  
+        </style>
+    </head>
+    <body>
+	    <h3 style = "text-align:left; color:#DC143C"><i>DataSet : Cereals</h3>
+        <h1 style = "text-align:center; color:#8B0000">D3-Visualisation</h1>
+		<h2 style = "text-align:center; color:#000000">CALORIES </i></h2>
+		<div id="footer">
+			<p>
+				<b><i><font color="black">NOTE:</font></i></b><br>
+				<b><i><font color="crimson">X-axis : Cereal names</font></b><br>
+				<b><font color="crimson">Y-axis : Quantity of ingediants</font></i></b>
+				</p>
+			
+			
+		</div>
+        <div id="tooltip" class="hidden">
+          <p><strong>Cereals</strong></p>
+          <p><span id="value">100</span>%</p>
+        </div>
+        <form name="controls">
+          <div>
+            <h3 style = "text-align:left; color:#8B0000"><i>Ingrediants:</i></h3>
+            <ul id="year">
+              <i><b>
+			  <label><input checked='checked' type="radio"  name="year" value="0" onClick = update(0)>Calories</label>
+              <label><input type="radio" name="year" value="1" onClick = update(1)>Protein</label>
+              <label><input type="radio" name="year" value="2" onClick = update(2)>Fat</label>
+              <label><input type="radio" name="year" value="3" onClick = update(3)>Sodium</label>
+              <label><input type="radio" name="year" value="4" onClick = update(4)>Fiber</label>
+			  <label><input type="radio" name="year" value="5" onClick = update(5)>Carbohydrates</label>
+              <label><input type="radio" name="year" value="6" onClick = update(6)>Sugars</label>
+			  <label><input type="radio" name="year" value="8" onClick = update(7)>Potassium</label>
+			  <label><input type="radio" name="year" value="9" onClick = update(8)>Vitamins</label>
+			  <label><input type="radio" name="year" value="10" onClick = update(9)>Weight</label>
+			  <label><input type="radio" name="year" value="11" onClick = update(10)>Cups</label>
+			 </i> 
+			 </b>
+            </ul>
+          </div>
+        </form>
+        <script type="text/javascript">
+          update(0);
+          function update(i)
+          {
+            var dataset;
+            var margin = {top: 20, right: 20, bottom: 200, left: 75},
+                w = 1250 - margin.left - margin.right,
+                h = 500 - margin.top - margin.bottom;
+
+            var xScale = d3.scale.ordinal()
+                           .rangeRoundBands([0, w], .1);
+            var yScale = d3.scale.linear()
+                           .range([h,0]);
+        
+            var xAxis = d3.svg.axis()
+                          .scale(xScale)
+                          .orient("bottom");
+            var yAxis = d3.svg.axis()
+                          .scale(yScale)
+                          .orient("left"); 
+
+            d3.csv("Cereals.csv", function(error, data) 
+            {
+                if (error) {console.log(error);}
+                else 
+                {   
+                  dataset = data;
+                  xScale.domain(data.map(function(d) { return d.Cereal; }));
+                  d3.select("svg").remove();
+                  if(i == 0)
+                  {
+
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Calories");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Calories; })]);
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "steelblue")
+                       .attr("x", function(d) {return xScale(d.Cereal)})
+                       .attr("y", function(d) {  return yScale(d.Calories); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Calories); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Calories)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Calories +"gms of calories" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+                  }
+                  /////Protein//////
+                  else if(i ==1)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Protein");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Protein; })]);
+                    d3.selectAll(".rect").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "red")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Protein); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Protein); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Protein)+")";})
+
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Protein +"gms of proteins" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      }); 
+                  }
+                  /////Fat//////
+                  else if(i ==2)
+                  {
+                     var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                     d3.select("h2").text("Fat content");
+                     yScale.domain([0, d3.max(dataset, function(d) { return +d.Fat; })]);
+                    //d3.selectAll("svg").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "orange")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Fat); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Fat); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Fat)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Fat +"gms of Fat" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+                  }
+                  /////Sodium//////
+                  else if(i ==3)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    d3.select("h2").text("Sodium content");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Sodium; })]);
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "green")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Sodium); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Sodium); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Sodium)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Sodium +"gms of sodium" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+                  }
+                  /////Fiber//////
+                  else if(i ==4)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    d3.select("h2").text("Fiber content");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Fiber; })]);
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "salmon")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Fiber); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Fiber); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Fiber)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal +":"+d.Fiber +"gms of fiber" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+                  }
+				  //Carbohydrates//
+				  else if(i ==5)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    d3.select("h2").text("Carbohydrates content");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Carbohydrates; })]);
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "peru")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Carbohydrates); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Carbohydrates); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Carbohydrates)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Carbohydrates +"gms of carbs" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+					  }
+                  /////Sugars//////
+                  else if(i ==6)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    d3.select("h2").text("Sugar content");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Sugars; })]);
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "magenta")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Sugars); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Sugars); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Sugars)+")";})
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Sugars +"gms of sugar" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+                  }
+				  
+				//Potassium//
+				  else if(i ==7)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Potassium content");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Potassium; })]);
+                    d3.selectAll(".rect").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "purple")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Potassium); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Potassium); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Potassium)+")";})
+
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Potassium +"gms of potassium" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+				}
+                   
+					  //Vitamins//
+				  else if(i ==8)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Vitamins");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Vitamins; })]);
+                    d3.selectAll(".rect").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "violet")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Vitamins); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Vitamins); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Vitamins)+")";})
+
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + ":"+ d.Vitamins +"gms of vitamins" +"<br/>" +"Type:" +d.Type +"<br/>" +"Manufactured by:" +d.Manufacturer +"<br/>" +"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+				}
+				//Weights//
+				  else if(i ==9)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Weights");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Weight; })]);
+                    d3.selectAll(".rect").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "greenyellow")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Weight); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Weight); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Weight)+")";})
+
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html("Weight of" +d.Cereal + "is" + d.Weight + "gms" +"<br/>"+"Type:" +d.Type +"<br/>"+"Manufactured by:" +d.Manufacturer+"<br/>"+"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });
+				}
+					   //Cups//
+				  else if(i ==10)
+                  {
+                    var svg = d3.select("body").append("svg")
+                                .attr("width", w + margin.left + margin.right)
+                                .attr("height", h + margin.top + margin.bottom)
+                                .append("g")
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                    d3.select("h2").text("Cups");
+                    yScale.domain([0, d3.max(dataset, function(d) { return +d.Cups; })]);
+                    d3.selectAll(".rect").remove(); 
+                    // drawing the bars
+                    svg.selectAll(".rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class", "bar")
+                       .attr("fill", "salmon")
+                       .attr("x", function(d) {return xScale(d.Cereal) })
+                       .attr("y", function(d) {  return yScale(d.Cups); })  
+                       .attr("width", xScale.rangeBand())
+                       .attr("height", function(d) { return h - yScale(d.Cups); })
+                       .attr("transform", function(d) { return "translate(0," + h - yScale(d.Cups)+")";})
+
+                       // Action Listener for mouse hover
+                       .on("mouseover", function(d)
+                       {
+                          //Get this bar's x/y values, then augment for the tooltip
+                          var xPosition = parseFloat(d3.select(this).attr("x")) + xScale.rangeBand() / 2;
+                          var yPosition = parseFloat(d3.select(this).attr("y")) / 2 + h / 2;
+
+                          //Update the tooltip position and value
+                          d3.select("#tooltip")
+                            .style("left", xPosition + "px")
+                            .style("top", yPosition + "px")           
+                            .select("#value")
+                            .html(d.Cereal + "capacity : " + d.Cups + "Cups "+"<br/>"+"Type:" +d.Type +"<br/>"+"Manufactured by:" +d.Manufacturer+"<br/>"+"Shelf :"+d.Shelf);
+           
+                          //Show the tooltip
+                          d3.select("#tooltip").classed("hidden", false);
+                      })
+                      .on("mouseout", function() 
+                      {  
+                          //Hide the tooltip
+                          d3.select("#tooltip").classed("hidden", true);
+                      });  
+				}
+				
+                ////////////////////////////////////////////////////////////////////
+	            /////////////// For all cases: the axes are the same!!//////////////
+                ////////////////////////////////////////////////////////////////////
+                // adding the x-axis 
+                svg.append("g")
+                   .attr("class", "x axis")
+                   .attr("transform", "translate(0," + h + ")")
+                   .call(xAxis)
+                   .selectAll("text")
+				   .attr("fill","blue")
+                   .text("");  
+                   
+
+                // adding the y-axis
+                svg.append("g")
+                   .attr("class", "y axis")
+                   .call(yAxis)
+                   .append("text")
+                  .text("");   
+            } // end of else
+          }); // end of csv
+        } // end of update  
+        </script> 
+    </body>
+</html>     
